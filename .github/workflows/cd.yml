@@ -1,0 +1,87 @@
+name: CD (simulado)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: lab40
+      TAG: feature07-${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalação reproduzível
+        run: npm ci
+
+      - name: Verificações antes da entrega (lint, testes, smoke)
+        run: |
+          npm run lint
+          npm test
+          npm run test:smoke
+
+      - name: Build da imagem Docker
+        run: docker build --pull -t "$IMAGE:$TAG" -t "$IMAGE:feature07" .
+
+      - name: Validar container da entrega
+        run: |
+          docker run -d --name lab40-cd -p 3000:3000 "$IMAGE:$TAG"
+          for i in $(seq 1 20); do
+            curl --silent --fail http://localhost:3000/health && break
+            sleep 1
+          done
+          curl --fail http://localhost:3000/health
+          curl --fail -X POST http://localhost:3000/api/features/7 \
+            -H "Content-Type: application/json" -d '{"numero":17}' | tee response.json
+          grep -q '"primo":true' response.json
+
+      - name: Encerrar container
+        if: always()
+        run: docker rm -f lab40-cd || true
+
+      - name: Empacotar imagem e registro de entrega
+        run: |
+          mkdir -p delivery
+          docker save "$IMAGE:$TAG" -o delivery/lab40-feature07.tar
+          {
+            echo "LAB40 - Registro de entrega (CD simulado)"
+            echo "Repositorio: ${{ github.repository }}"
+            echo "Referencia:  ${{ github.ref }}"
+            echo "Commit SHA:  ${{ github.sha }}"
+            echo "Imagem/tag:  $IMAGE:$TAG"
+            echo "Feature:     07 - Verificador de numero primo"
+            echo "Evento:      ${{ github.event_name }}"
+            echo "Executado por: ${{ github.actor }}"
+            echo "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "Data (UTC):  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "Health check: OK"
+            echo "Endpoint /api/features/7: $(cat response.json)"
+          } > delivery/deployment-record.txt
+          cat delivery/deployment-record.txt
+
+      - name: Implantação simulada
+        run: echo "Entrega simulada da imagem $IMAGE:$TAG concluída. Nenhum serviço externo foi utilizado."
+
+      - name: Publicar artefato da entrega
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab40-delivery-record
+          path: delivery/
+          retention-days: 7
