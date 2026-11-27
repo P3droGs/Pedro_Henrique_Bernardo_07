@@ -15,7 +15,9 @@ function execute(input) {
   }
   const { numero } = input;
   if (!Number.isSafeInteger(numero) || numero < 0) {
-    throw new Error("O campo numero deve ser um inteiro maior ou igual a zero.");
+    throw new Error(
+      "O campo numero deve ser um inteiro maior ou igual a zero.",
+    );
   }
 
   if (numero < 2) return { numero, primo: false };
@@ -32,5 +34,5 @@ module.exports = {
   name: "Verificador de número primo",
   description: "Determina se um inteiro é primo.",
   implemented,
-  execute
+  execute,
 };

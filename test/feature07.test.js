@@ -22,7 +22,10 @@ test("rejeita negativos, decimais e strings", () => {
 
 // Testes complementares
 test("caso típico: retorna objeto com numero e primo", () => {
-  assert.deepEqual(feature.execute({ numero: 17 }), { numero: 17, primo: true });
+  assert.deepEqual(feature.execute({ numero: 17 }), {
+    numero: 17,
+    primo: true,
+  });
 });
 
 test("limite: primos e compostos maiores, incluindo quadrado de primo", () => {
@@ -34,7 +37,16 @@ test("limite: primos e compostos maiores, incluindo quadrado de primo", () => {
 });
 
 test("rejeita campo ausente, null, NaN, inteiro inseguro e entrada que não é objeto", () => {
-  for (const input of [{}, { numero: null }, { numero: NaN }, { numero: 2 ** 53 }, null, undefined, 17, [17]])
+  for (const input of [
+    {},
+    { numero: null },
+    { numero: NaN },
+    { numero: 2 ** 53 },
+    null,
+    undefined,
+    17,
+    [17],
+  ])
     assert.throws(() => feature.execute(input), { name: "Error" });
 });
 

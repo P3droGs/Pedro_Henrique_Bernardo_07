@@ -10,6 +10,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      IMAGE: lab40
+      TAG: feature07-${{ github.sha }}
+      CONTAINER_NAME: lab40-container
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,6 +27,9 @@ jobs:
       - name: Instalação reproduzível
         run: npm ci
 
+      - name: Formatação (Prettier)
+        run: npm run format:check
+
       - name: Lint (ESLint)
         run: npm run lint
 
@@ -35,31 +42,37 @@ jobs:
       - name: Auditoria de dependências
         run: npm audit --audit-level=high
 
-      - name: Build da imagem Docker
-        run: docker build --pull -t lab40:feature07 .
+      - name: Build da imagem Docker (tag com SHA)
+        run: |
+          docker build --pull -t "$IMAGE:$TAG" .
+          docker images "$IMAGE"
 
       - name: Container efêmero - health e endpoint
         run: |
-          docker run -d --name lab40-container -p 3000:3000 lab40:feature07
+          CONTAINER_ID=$(docker run -d --name "$CONTAINER_NAME" -p 3000:3000 "$IMAGE:$TAG")
+          echo "Container ID: $CONTAINER_ID"
+          docker ps --filter "id=$CONTAINER_ID"
           for i in $(seq 1 20); do
             curl --silent --fail http://localhost:3000/health && break
             sleep 1
           done
           curl --fail http://localhost:3000/health
+          echo
           curl --fail -X POST http://localhost:3000/api/features/7 \
             -H "Content-Type: application/json" -d '{"numero":17}' | tee response.json
+          echo
           grep -q '"primo":true' response.json
 
       - name: Logs do container
         if: always()
-        run: docker logs lab40-container || true
+        run: docker logs "$CONTAINER_NAME" || true
 
       - name: Encerrar container
         if: always()
-        run: docker rm -f lab40-container || true
+        run: docker rm -f "$CONTAINER_NAME" || true
 
       - name: Exportar imagem
-        run: docker save lab40:feature07 -o lab40-feature07.tar
+        run: docker save "$IMAGE:$TAG" -o lab40-feature07.tar
 
       - name: Publicar imagem como artefato
         uses: actions/upload-artifact@v4
