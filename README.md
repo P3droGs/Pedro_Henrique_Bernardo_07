@@ -97,6 +97,7 @@ O arquivo `test/feature07.test.js` cobre:
 
 ## Qualidade e segurança
 
+- **Formatação:** `npm run format:check` verifica e `npm run format` corrige (Prettier 3). Só é aplicado aos arquivos criados nesta entrega (feature 07, testes, smoke e config do ESLint), porque o contrato proíbe alterar `src/app.js` e `public/`.
 - **Lint:** `npm run lint` (ESLint 10, configurado em `eslint.config.js` com as regras recomendadas). Saída sem erros.
 - **Auditoria:** `npm audit --audit-level=high`. Saída observada: `found 0 vulnerabilities`. As únicas dependências são de desenvolvimento (`eslint`, `@eslint/js`, `globals`). A imagem Docker instala apenas as de produção (`npm ci --omit=dev`), ou seja, nenhuma.
 
@@ -117,12 +118,12 @@ O workflow `.github/workflows/ci.yml` roda em todo `push` e `pull_request`, nest
 ## CD simulado (GitHub Actions)
 
 O workflow `.github/workflows/cd.yml` roda em todo push na `main` (inclusive no merge do Pull Request) e também pode ser disparado manualmente (`workflow_dispatch`). Ele:
-1. refaz lint, testes e smoke test;
+1. refaz formatação, lint, testes, smoke test e auditoria;
 2. constrói a imagem `lab40:feature07-<SHA>`;
 3. valida o container (`/health` e `POST /api/features/7`);
 4. publica o artefato `lab40-delivery-record`, com:
    - `lab40-feature07.tar`: a imagem, que pode ser carregada com `docker load -i lab40-feature07.tar`;
-   - `deployment-record.txt`: repositório, referência, SHA, tag e link da execução.
+   - `deployment-record.txt`: repositório, referência, SHA do commit, tag e ID da imagem, **ID do container** usado na validação, saída do `docker ps`, SHA-256 do `.tar`, respostas de `/health` e da feature 7, e link da execução.
 
 A implantação é simulada e não usa nenhum serviço externo nem credencial.
 

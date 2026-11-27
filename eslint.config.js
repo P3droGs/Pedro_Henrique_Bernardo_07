@@ -6,19 +6,24 @@ module.exports = [
   { ignores: ["node_modules/**", "coverage/**"] },
   js.configs.recommended,
   {
-    files: ["src/**/*.js", "test/**/*.js", "scripts/**/*.js", "eslint.config.js"],
+    files: [
+      "src/**/*.js",
+      "test/**/*.js",
+      "scripts/**/*.js",
+      "eslint.config.js",
+    ],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "commonjs",
-      globals: { ...globals.node }
-    }
+      globals: { ...globals.node },
+    },
   },
   {
     files: ["public/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
-      globals: { ...globals.browser }
-    }
-  }
+      globals: { ...globals.browser },
+    },
+  },
 ];
