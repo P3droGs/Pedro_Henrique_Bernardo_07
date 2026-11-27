@@ -114,6 +114,18 @@ O workflow `.github/workflows/ci.yml` roda em todo `push` e `pull_request`, nest
 9. container efêmero validando `/health` e `POST /api/features/7`;
 10. exportação da imagem (`lab40-feature07.tar`) como artefato.
 
+## CD simulado (GitHub Actions)
+
+O workflow `.github/workflows/cd.yml` roda em todo push na `main` (inclusive no merge do Pull Request) e também pode ser disparado manualmente (`workflow_dispatch`). Ele:
+1. refaz lint, testes e smoke test;
+2. constrói a imagem `lab40:feature07-<SHA>`;
+3. valida o container (`/health` e `POST /api/features/7`);
+4. publica o artefato `lab40-delivery-record`, com:
+   - `lab40-feature07.tar`: a imagem, que pode ser carregada com `docker load -i lab40-feature07.tar`;
+   - `deployment-record.txt`: repositório, referência, SHA, tag e link da execução.
+
+A implantação é simulada e não usa nenhum serviço externo nem credencial.
+
 ## Docker
 
 ```bash
