@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalação reproduzível
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Testes automatizados
+        run: npm test
+
+      - name: Smoke test
+        run: npm run test:smoke
+
+      - name: Auditoria de dependências
+        run: npm audit --audit-level=high
+
+      - name: Build da imagem Docker
+        run: docker build --pull -t lab40:feature07 .
+
+      - name: Container efêmero - health e endpoint
+        run: |
+          docker run -d --name lab40-container -p 3000:3000 lab40:feature07
+          for i in $(seq 1 20); do
+            curl --silent --fail http://localhost:3000/health && break
+            sleep 1
+          done
+          curl --fail http://localhost:3000/health
+          curl --fail -X POST http://localhost:3000/api/features/7 \
+            -H "Content-Type: application/json" -d '{"numero":17}' | tee response.json
+          grep -q '"primo":true' response.json
+
+      - name: Logs do container
+        if: always()
+        run: docker logs lab40-container || true
+
+      - name: Encerrar container
+        if: always()
+        run: docker rm -f lab40-container || true
+
+      - name: Exportar imagem
+        run: docker save lab40:feature07 -o lab40-feature07.tar
+
+      - name: Publicar imagem como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab40-image
+          path: lab40-feature07.tar
+          retention-days: 7

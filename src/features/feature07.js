@@ -1,15 +1,29 @@
 // Funcionalidade 07: Verificador de número primo.
 // Objetivo: Determina se um inteiro é primo.
 // Exemplo de entrada: { numero: 17 }
-// Implemente conforme as regras e critérios do enunciado fornecido pelo professor.
+// Regras: numero deve ser inteiro >= 0; 0 e 1 não são primos; decimais,
+// strings, NaN e Infinity são rejeitados. O teste de divisores vai até √n.
+// Decisão: o limite é Number.MAX_SAFE_INTEGER (inteiros representados com
+// exatidão em JavaScript), o que mantém o laço em no máximo ~4,7 × 10^7 passos.
 
-const implemented = false;
+const implemented = true;
 
-// Desenvolva a regra de negócio e valide todos os dados de entrada.
+// Valida a entrada e informa se o número é primo.
 function execute(input) {
-  // TODO: substituir este bloco pela implementação testada da funcionalidade.
-  void input;
-  throw new Error("Funcionalidade ainda não implementada.");
+  if (input === null || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("Informe um objeto com o campo numero.");
+  }
+  const { numero } = input;
+  if (!Number.isSafeInteger(numero) || numero < 0) {
+    throw new Error("O campo numero deve ser um inteiro maior ou igual a zero.");
+  }
+
+  if (numero < 2) return { numero, primo: false };
+  if (numero % 2 === 0) return { numero, primo: numero === 2 };
+  for (let divisor = 3; divisor * divisor <= numero; divisor += 2) {
+    if (numero % divisor === 0) return { numero, primo: false };
+  }
+  return { numero, primo: true };
 }
 
 // Mantém o contrato de integração utilizado pela API central.
